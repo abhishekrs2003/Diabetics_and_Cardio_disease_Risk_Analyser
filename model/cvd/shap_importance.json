@@ -1,0 +1,22 @@
+{
+  "Comorbidity_Score": 7.150594099604472,
+  "Arthritis": 3.760065949909274,
+  "Depression": 2.8844893231955546,
+  "Diabetes_Yes": 2.538428950639697,
+  "Other_Cancer": 1.9685664710971393,
+  "Skin_Cancer": 1.8137916908588148,
+  "Age_Category": 0.9784989003102778,
+  "General_Health": 0.5513855978755096,
+  "Sex": 0.427514584827492,
+  "Diabetes_No": 0.2058249675809597,
+  "Smoking_History": 0.18717806993089134,
+  "Weight_(kg)": 0.1548638878788134,
+  "BMI": 0.15005820509597928,
+  "Alcohol_Consumption": 0.12303770677115901,
+  "Height_(cm)": 0.0674379464225508,
+  "Green_Vegetables_Consumption": 0.049562997120206925,
+  "Diabetes_No, pre-diabetes or borderline diabetes": 0.025008908854670758,
+  "Exercise": 0.018691027939415586,
+  "FriedPotato_Consumption": 0.013117158561829323,
+  "Fruit_Consumption": 0.0021667835340864324
+}

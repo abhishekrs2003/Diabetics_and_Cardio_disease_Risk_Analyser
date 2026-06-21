@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}CardioRisk AI — Home{% endblock %}
+{% block content %}
+
+<div class="home-hero">
+  <div class="sec-tag">Clinical AI · SHAP Explainable</div>
+  <h1>Cardiovascular &amp; Diabetes<br><em>Risk Prediction</em></h1>
+  <p>A dual-model clinical decision support system. Get your personalized diabetes
+     risk score and cardiovascular disease probability — and see <em>exactly which
+     of your answers</em> drove that result, powered by SHAP explainability.</p>
+  <div class="home-cta-row">
+    <a href="/diabetes" class="btn btn-primary btn-lg">Start Assessment</a>
+    <a href="/dashboard" class="btn btn-outline btn-lg">View Dashboard</a>
+  </div>
+</div>
+
+<div class="home-stat-grid">
+  <div class="stat-box">
+    <div class="stat-val" style="color:#ef4444">{{ "%.0f"|format((cvd_metrics.roc_auc or 0.83)*100) }}%</div>
+    <div class="stat-lbl">CVD model ROC-AUC</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:#22c55e">{{ "%.2f"|format(diab_metrics.r2 or 0.93) }}</div>
+    <div class="stat-lbl">Diabetes model R²</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">SHAP</div>
+    <div class="stat-lbl">Per-user explainability</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">2</div>
+    <div class="stat-lbl">Connected models</div>
+  </div>
+</div>
+
+<div class="feature-cards">
+  <div class="feat-card">
+    <div class="feat-icon">🩸</div>
+    <div>
+      <div class="feat-title">Diabetes Risk Score (Neural Network)</div>
+      <div class="feat-desc">Continuous 0–100 risk score from glucose, HbA1c, BMI,
+        activity level, sleep, and 11 other clinical features.</div>
+    </div>
+  </div>
+  <div class="feat-card">
+    <div class="feat-icon">🫀</div>
+    <div>
+      <div class="feat-title">CVD Probability (Logistic Regression)</div>
+      <div class="feat-desc">Binary classification using a clinically interpretable
+        linear model — smoking, BMI, diet, age, comorbidities and more.</div>
+    </div>
+  </div>
+  <div class="feat-card">
+    <div class="feat-icon">🔍</div>
+    <div>
+      <div class="feat-title">Live SHAP Explanations</div>
+      <div class="feat-desc">Every prediction shows a personalised breakdown:
+        exactly which of <em>your</em> answers pushed the risk up or down.</div>
+    </div>
+  </div>
+  <div class="feat-card">
+    <div class="feat-icon">⚡</div>
+    <div>
+      <div class="feat-title">Intervention Simulator</div>
+      <div class="feat-desc">Adjust smoking status, BMI, exercise, diet — and see
+        the SHAP-attributed risk reduction for each change instantly.</div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:0 24px 60px">
+  <div class="disclaimer" style="max-width:680px;margin:0 auto;display:flex;gap:8px;align-items:flex-start;text-align:left">
+    <span>⚠</span>
+    <span>Educational tool only. Not a medical diagnostic device. Always consult
+      a qualified healthcare professional for health decisions.</span>
+  </div>
+</div>
+{% endblock %}

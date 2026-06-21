@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}CardioRisk AI{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" class="nav-brand">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+      <path d="M5 12 Q7.5 6 12 12 Q16.5 18 19 12" stroke="#ef4444" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </svg>
+    CardioRisk<em>AI</em>
+  </a>
+  <div class="nav-links">
+    <a href="/"          class="nav-link {% if request.path=='/' %}active{% endif %}">Home</a>
+    <a href="/diabetes"  class="nav-link {% if request.path=='/diabetes' %}active{% endif %}">
+      Diabetes{% if session.get('diabetes_result') %}<span class="nav-dot"></span>{% endif %}
+    </a>
+    <a href="/cvd"       class="nav-link {% if request.path=='/cvd' %}active{% endif %}">CVD</a>
+    <a href="/simulator" class="nav-link {% if request.path=='/simulator' %}active{% endif %}">Simulator</a>
+    <a href="/dashboard" class="nav-link {% if request.path=='/dashboard' %}active{% endif %}">Dashboard</a>
+  </div>
+</nav>
+
+<main class="page">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <span class="footer-brand">CardioRisk AI</span>
+    <span class="footer-mid">Logistic Regression (CVD) · Neural Network (Diabetes) · SHAP Explainable</span>
+    <span class="footer-warn">⚠ Not a substitute for medical advice</span>
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

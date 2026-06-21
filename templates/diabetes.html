@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+{% block title %}Diabetes Risk Prediction — CardioRisk AI{% endblock %}
+
+{% block extra_head %}
+<script>
+  window.DIAB_SHAP_GLOBAL = {{ diab_shap | tojson | default('{}') }};
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="sec-tag">Step 1 of 2</div>
+  <h1>Diabetes Risk <em>Assessment</em></h1>
+  <p>Fill in your health metrics below. The Neural Network model will compute your
+     risk score and show you a live SHAP breakdown of exactly which factors
+     drove that result.</p>
+</div>
+
+<div class="predict-layout">
+
+  <!-- ══════════════ LEFT — Form ══════════════ -->
+  <div class="form-card">
+
+    <div class="wizard-tabs" id="diab_tabs">
+      <div class="wtab active"><span class="wtab-num">1</span> Biometrics</div>
+      <div class="wtab"><span class="wtab-num">2</span> Blood Work</div>
+      <div class="wtab"><span class="wtab-num">3</span> Lifestyle</div>
+    </div>
+
+    <form id="diabetes_form">
+
+      <!-- ── Section 1: Biometrics ── -->
+      <div class="form-section active" id="diab_sec_0">
+        <div class="field-grid">
+
+          <div class="field-group">
+            <label class="field-label">Age</label>
+            <input type="number" name="age" class="field-input"
+                   min="1" max="120" placeholder="e.g. 45">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Gender</label>
+            <div class="select-wrap">
+              <select name="gender" id="diab_gender" class="field-select"
+                      onchange="onGenderChange()">
+                <option value="">Select...</option>
+                <option value="female">Female</option>
+                <option value="male">Male</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Height</label>
+            <div class="unit-input-wrap">
+              <input type="number" id="d_height" name="height_cm"
+                     class="field-input" min="50" max="250" placeholder="e.g. 170"
+                     oninput="onBodyChange('d')">
+              <span class="unit-label">cm</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Weight</label>
+            <div class="unit-input-wrap">
+              <input type="number" id="d_weight" name="weight_kg"
+                     class="field-input" min="20" max="300" placeholder="e.g. 75"
+                     oninput="onBodyChange('d')">
+              <span class="unit-label">kg</span>
+            </div>
+          </div>
+
+          <div class="field-group full">
+            <div class="bmi-card">
+              <div class="bmi-card-left">
+                <div class="bmi-icon">⚖️</div>
+                <div>
+                  <div class="bmi-card-label">Calculated BMI</div>
+                  <div class="bmi-card-value" id="d_bmi_val">—</div>
+                </div>
+              </div>
+              <div class="bmi-card-cat" id="d_bmi_cat">Enter height &amp; weight</div>
+              <div class="bmi-scale-wrap">
+                <div class="bmi-scale-bar">
+                  <div class="bmi-scale-marker" id="d_bmi_marker"></div>
+                </div>
+                <div class="bmi-scale-ticks">
+                  <span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field-group full">
+            <label class="field-label">Waist Circumference</label>
+            <div class="unit-input-wrap">
+              <input type="number" name="waist_circumference_cm" class="field-input"
+                     min="50" max="200" placeholder="e.g. 88">
+              <span class="unit-label">cm</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── Section 2: Blood Work ── -->
+      <div class="form-section" id="diab_sec_1">
+        <div class="field-grid">
+
+          <div class="field-group">
+            <label class="field-label">Blood Pressure</label>
+            <div class="unit-input-wrap">
+              <input type="number" name="blood_pressure" class="field-input"
+                     min="60" max="220" placeholder="e.g. 120">
+              <span class="unit-label">mmHg</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Fasting Glucose</label>
+            <div class="unit-input-wrap">
+              <input type="number" name="fasting_glucose_level" class="field-input"
+                     min="50" max="500" placeholder="e.g. 95">
+              <span class="unit-label">mg/dL</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Insulin Level</label>
+            <div class="unit-input-wrap">
+              <input type="number" name="insulin_level" class="field-input"
+                     min="0" max="300" placeholder="e.g. 15">
+              <span class="unit-label">μU/mL</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">HbA1c Level — <span class="range-val-inline" id="hba1c_val">5.5</span></label>
+            <input type="range" name="HbA1c_level" min="4" max="15" step="0.1" value="5.5"
+                   oninput="syncRangeInline(this,'hba1c_val')">
+            <div class="range-hint-row"><span>Normal &lt;5.7</span><span>Diabetes ≥6.5</span></div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Cholesterol</label>
+            <div class="unit-input-wrap">
+              <input type="number" name="cholesterol_level" class="field-input"
+                     min="80" max="400" placeholder="e.g. 200">
+              <span class="unit-label">mg/dL</span>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Triglycerides</label>
+            <div class="unit-input-wrap">
+              <input type="number" name="triglycerides_level" class="field-input"
+                     min="30" max="600" placeholder="e.g. 150">
+              <span class="unit-label">mg/dL</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── Section 3: Lifestyle ── -->
+      <div class="form-section" id="diab_sec_2">
+        <div class="field-grid">
+
+          <div class="field-group">
+            <label class="field-label">Physical Activity Level</label>
+            <div class="select-wrap">
+              <select name="physical_activity_level" class="field-select">
+                <option value="">Select...</option>
+                <option value="Low">Low</option>
+                <option value="Moderate">Moderate</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Family History of Diabetes?</label>
+            <div class="pill-group">
+              <label class="pill"><input type="radio" name="family_history_diabetes" value="Yes"><label>Yes</label></label>
+              <label class="pill"><input type="radio" name="family_history_diabetes" value="No" checked><label>No</label></label>
+            </div>
+          </div>
+
+          <div class="field-group full">
+            <label class="field-label">Daily Calorie Intake — <span class="range-val-inline" id="cal_val">2000</span></label>
+            <input type="range" name="daily_calorie_intake" min="800" max="5000" step="50" value="2000"
+                   oninput="syncRangeInline(this,'cal_val')">
+          </div>
+
+          <div class="field-group full">
+            <label class="field-label">Sugar Intake (g/day) — <span class="range-val-inline" id="sugar_val">50</span></label>
+            <input type="range" name="sugar_intake_grams_per_day" min="0" max="200" step="1" value="50"
+                   oninput="syncRangeInline(this,'sugar_val')">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Sleep Hours/Night — <span class="range-val-inline" id="sleep_val">7.0</span></label>
+            <input type="range" name="sleep_hours" min="2" max="12" step="0.5" value="7"
+                   oninput="syncRangeInline(this,'sleep_val')">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Stress Level</label>
+            <div class="pill-group">
+              <label class="pill"><input type="radio" name="stress_level" value="1"><label>Low</label></label>
+              <label class="pill"><input type="radio" name="stress_level" value="2" checked><label>Medium</label></label>
+              <label class="pill"><input type="radio" name="stress_level" value="3"><label>High</label></label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button type="button" class="btn btn-outline" id="diab_back"
+                style="visibility:hidden" onclick="wizardNav(-1)">← Back</button>
+        <div class="wizard-dots" id="diab_dots"></div>
+        <button type="button" class="btn btn-primary" id="diab_next"
+                onclick="wizardNav(1)">Next →</button>
+      </div>
+
+    </form>
+
+    <div id="diab_error" class="form-error" style="display:none"></div>
+
+    <button class="btn-predict" id="btn_predict_diab" onclick="submitDiabetes()">
+      <span class="btn-spinner"></span>
+      <span class="btn-label">🩸 Analyze My Diabetes Risk</span>
+    </button>
+
+  </div><!-- /form-card -->
+
+  <!-- ══════════════ RIGHT — Result panel ══════════════ -->
+  <div class="result-panel">
+    <div style="padding:10px 18px;border-bottom:1px solid var(--line);
+                display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;
+                   letter-spacing:.1em;color:var(--text2);text-transform:uppercase">
+        Diabetes Assessment
+      </span>
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--green);
+                   display:inline-block;animation:pulse-dot 2s ease-in-out infinite"></span>
+    </div>
+
+    <div class="result-placeholder" id="diab_placeholder">
+      <div class="placeholder-icon">🩸</div>
+      <h3>Awaiting your inputs</h3>
+      <p>Complete all three sections and click <strong>Analyze My Diabetes Risk</strong>
+         to get your score, category, and a live SHAP breakdown.</p>
+      <p class="placeholder-note">Your result will auto-carry into the CVD assessment.</p>
+    </div>
+
+    <div id="diab_result" style="display:none">
+
+      <div class="gauge-section">
+        <div class="gauge-label-top">Diabetes Risk Score</div>
+        <div class="gauge-wrap">
+          <svg viewBox="0 0 200 110" width="180" style="overflow:visible">
+            <path d="M20 100 A80 80 0 0 1 180 100" fill="none"
+                  stroke="rgba(255,255,255,.08)" stroke-width="14" stroke-linecap="round"/>
+            <path id="diab_gauge_arc" d="M20 100 A80 80 0 0 1 180 100" fill="none"
+                  stroke="#22c55e" stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="251.2" stroke-dashoffset="251.2"
+                  style="transition:stroke-dashoffset 1.2s cubic-bezier(.34,1.2,.64,1),stroke .5s"/>
+            <text id="diab_gauge_text" x="100" y="92" text-anchor="middle"
+                  style="font-family:'Instrument Serif',serif;font-size:2rem;fill:var(--text)">—</text>
+            <text x="100" y="108" text-anchor="middle" style="font-size:.65rem;fill:var(--text2)">OUT OF 100</text>
+          </svg>
+        </div>
+        <div class="risk-pill" id="diab_risk_badge">—</div>
+      </div>
+
+      <div class="bmi-result-pill">
+        <span>BMI</span><span class="bmi-result-val" id="diab_bmi_val">—</span>
+        <span id="diab_bmi_cat">—</span>
+      </div>
+
+      <!-- ── Gestational follow-up (shown conditionally) ── -->
+      <div class="gestational-card" id="gestational_question" style="display:none">
+        <div class="gestational-inner">
+          <div class="gestational-icon">🤰</div>
+          <div>
+            <div class="gestational-title">One follow-up question</div>
+            <div class="gestational-sub">
+              Have you ever been told you had diabetes <strong>only during pregnancy</strong>?
+            </div>
+            <div class="pill-group" style="margin-top:10px">
+              <label class="pill">
+                <input type="radio" name="gestational_diabetes" value="yes"
+                       onchange="onGestationalChange('yes')">
+                <label id="gest_yes_lbl">Yes, gestational only</label>
+              </label>
+              <label class="pill">
+                <input type="radio" name="gestational_diabetes" value="no"
+                       onchange="onGestationalChange('no')">
+                <label id="gest_no_lbl">No / not applicable</label>
+              </label>
+            </div>
+            <div class="gestational-why">
+              This affects your cardiovascular risk profile and will be carried
+              over to the CVD assessment automatically.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SHAP explainability (the core requested feature) ── -->
+      <div class="shap-section">
+        <div class="shap-section-title">🔍 Why this score? (SHAP explanation)</div>
+        <div class="shap-section-sub">
+          Each bar shows how much that specific answer pushed your risk score
+          up (red, right) or down (green, left), relative to the average person.
+        </div>
+        <div class="shap-legend">
+          <div class="shap-legend-item"><span class="shap-legend-swatch" style="background:#ef4444"></span> Increases risk</div>
+          <div class="shap-legend-item"><span class="shap-legend-swatch" style="background:#22c55e"></span> Decreases risk</div>
+        </div>
+        <div id="diab_shap_waterfall"></div>
+        <div class="shap-explainer-text" id="diab_shap_summary">
+          <!-- Filled dynamically with a plain-English summary sentence -->
+        </div>
+      </div>
+
+      <a href="/cvd" class="next-step-btn" id="diab_next_btn" style="display:none">
+        Next: CVD Assessment →
+        <small id="next_step_sub">Diabetes result will be prefilled</small>
+      </a>
+
+      <div class="disclaimer">
+        <span>⚠</span>
+        <span>Educational estimate only. Consult a healthcare professional.</span>
+      </div>
+
+    </div><!-- /diab_result -->
+  </div><!-- /result-panel -->
+
+</div><!-- /predict-layout -->
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/predict.js') }}"></script>
+<script>
+  initWizard('#diab_tabs',
+    ['diab_sec_0','diab_sec_1','diab_sec_2'],
+    'diab_dots', 'diab_back', 'diab_next', 'btn_predict_diab'
+  );
+</script>
+{% endblock %}

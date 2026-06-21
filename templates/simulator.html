@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Intervention Simulator — CardioRisk AI{% endblock %}
+
+{% block extra_head %}
+<script>
+  window.SESSION_PREFILL = {{ prefill | tojson | default('{}') }};
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="sec-tag">SHAP-powered</div>
+  <h1>Lifestyle Intervention <em>Simulator</em></h1>
+  <p>Adjust lifestyle factors and instantly see how much your predicted risk
+     would change. Each bar shows the SHAP-attributed contribution of that
+     specific intervention.</p>
+</div>
+
+<div class="sim-layout" id="simulator_page">
+
+  <div class="card">
+
+    <div class="sim-model-tabs">
+      <button class="sim-tab active" data-model="cvd" onclick="setSimModel('cvd')">🫀 CVD Risk</button>
+      <button class="sim-tab" data-model="diabetes" onclick="setSimModel('diabetes')">🩸 Diabetes Risk</button>
+    </div>
+
+    <div id="cvd_controls">
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Smoking</span><span class="sim-impact" id="imp_Smoking_History">—</span></div>
+        <div class="pill-group">
+          <label class="pill"><input type="radio" name="Smoking_History" value="No" checked onchange="runSim()"><label>Non-smoker</label></label>
+          <label class="pill"><input type="radio" name="Smoking_History" value="Yes" onchange="runSim()"><label>Smoker</label></label>
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Exercise (past 30 days)</span><span class="sim-impact" id="imp_Exercise">—</span></div>
+        <div class="pill-group">
+          <label class="pill"><input type="radio" name="Exercise" value="Yes" checked onchange="runSim()"><label>Active</label></label>
+          <label class="pill"><input type="radio" name="Exercise" value="No" onchange="runSim()"><label>Inactive</label></label>
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>BMI — <span id="sim_bmi_lbl">27.0</span></span><span class="sim-impact" id="imp_BMI">—</span></div>
+        <input type="range" name="BMI" min="15" max="50" step="0.5" value="27" oninput="syncRange(this,'sim_bmi_lbl');runSim()">
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Alcohol (drinks/week) — <span id="sim_alc_lbl">4</span></span><span class="sim-impact" id="imp_Alcohol_Consumption">—</span></div>
+        <input type="range" name="Alcohol_Consumption" min="0" max="30" step="1" value="4" oninput="syncRange(this,'sim_alc_lbl');runSim()">
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Fried potato (servings/week) — <span id="sim_fry_lbl">10</span></span><span class="sim-impact" id="imp_FriedPotato_Consumption">—</span></div>
+        <input type="range" name="FriedPotato_Consumption" min="0" max="40" step="1" value="10" oninput="syncRange(this,'sim_fry_lbl');runSim()">
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Fruit (servings/week) — <span id="sim_fruit_lbl">15</span></span><span class="sim-impact" id="imp_Fruit_Consumption">—</span></div>
+        <input type="range" name="Fruit_Consumption" min="0" max="60" step="1" value="15" oninput="syncRange(this,'sim_fruit_lbl');runSim()">
+      </div>
+
+      <div style="margin-top:6px">
+        <div style="font-size:.72rem;font-weight:600;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Quick scenarios</div>
+        <div class="preset-row">
+          <button class="preset-btn" onclick="applyPreset('optimal')">🏆 Optimal lifestyle</button>
+          <button class="preset-btn" onclick="applyPreset('no_smoke')">🚭 Quit smoking</button>
+          <button class="preset-btn" onclick="applyPreset('exercise')">🏃 Add exercise</button>
+          <button class="preset-btn" onclick="applyPreset('bmi')">⚖️ Healthy BMI</button>
+          <button class="preset-btn" onclick="applyPreset('reset')">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="diab_controls" style="display:none">
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Physical activity</span><span class="sim-impact" id="imp_physical_activity_level">—</span></div>
+        <div class="pill-group">
+          <label class="pill"><input type="radio" name="physical_activity_level" value="Low" checked onchange="runSim()"><label>Low</label></label>
+          <label class="pill"><input type="radio" name="physical_activity_level" value="Moderate" onchange="runSim()"><label>Moderate</label></label>
+          <label class="pill"><input type="radio" name="physical_activity_level" value="High" onchange="runSim()"><label>High</label></label>
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Sugar intake (g/day) — <span id="sim_sugar_lbl">70</span></span><span class="sim-impact" id="imp_sugar_intake_grams_per_day">—</span></div>
+        <input type="range" name="sugar_intake_grams_per_day" min="0" max="200" step="5" value="70" oninput="syncRange(this,'sim_sugar_lbl');runSim()">
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Sleep hours/night — <span id="sim_sleep_lbl">6.5</span></span><span class="sim-impact" id="imp_sleep_hours">—</span></div>
+        <input type="range" name="sleep_hours" min="3" max="12" step="0.5" value="6.5" oninput="syncRange(this,'sim_sleep_lbl');runSim()">
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>Stress level</span><span class="sim-impact" id="imp_stress_level">—</span></div>
+        <div class="pill-group">
+          <label class="pill"><input type="radio" name="stress_level" value="1" onchange="runSim()"><label>Low</label></label>
+          <label class="pill"><input type="radio" name="stress_level" value="2" checked onchange="runSim()"><label>Medium</label></label>
+          <label class="pill"><input type="radio" name="stress_level" value="3" onchange="runSim()"><label>High</label></label>
+        </div>
+      </div>
+
+      <div class="field-group" style="margin-bottom:14px">
+        <div class="sim-field-label"><span>BMI (target) — <span id="sim_d_bmi_lbl">27.0</span></span><span class="sim-impact" id="imp_bmi">—</span></div>
+        <input type="range" name="bmi" min="15" max="50" step="0.5" value="27" oninput="syncRange(this,'sim_d_bmi_lbl');runSim()">
+      </div>
+
+      <div style="margin-top:6px">
+        <div style="font-size:.72rem;font-weight:600;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Quick scenarios</div>
+        <div class="preset-row">
+          <button class="preset-btn" onclick="applyPreset('optimal')">🏆 Optimal</button>
+          <button class="preset-btn" onclick="applyPreset('exercise')">🏃 Add exercise</button>
+          <button class="preset-btn" onclick="applyPreset('sleep')">😴 Fix sleep</button>
+          <button class="preset-btn" onclick="applyPreset('sugar')">🍬 Cut sugar</button>
+          <button class="preset-btn" onclick="applyPreset('reset')">↺ Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-size:.72rem;color:var(--text2);line-height:1.6">
+      <strong style="color:var(--text)">How this works:</strong>
+      Each intervention is applied to your profile independently and as a combined set.
+      The bars show the marginal effect of each change on your predicted risk.
+    </div>
+
+  </div>
+
+  <div>
+    <div class="compare-row" style="margin-bottom:14px">
+      <div class="compare-box"><div class="compare-num" id="sim_baseline" style="color:var(--text2)">—</div><div class="compare-lbl">Baseline risk</div></div>
+      <div class="compare-arrow">→</div>
+      <div class="compare-box"><div class="compare-num" id="sim_new" style="color:var(--green)">—</div><div class="compare-lbl">Modified risk</div></div>
+    </div>
+
+    <div class="delta-card card" id="sim_delta_card" style="margin-bottom:14px">
+      <div class="delta-num" id="sim_delta_num" style="color:var(--text2)">—</div>
+      <div class="delta-sub" id="sim_delta_sub">Adjust the controls on the left to see the impact</div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);margin-bottom:10px;font-family:'JetBrains Mono',monospace">
+        Impact per intervention
+      </div>
+      <div id="sim_shap_bars"><p style="font-size:.78rem;color:var(--text2)">Adjust the controls to see per-intervention impact</p></div>
+    </div>
+
+    <div class="disclaimer">
+      <span>⚠</span>
+      <span>Risk changes shown are model estimates, not clinical predictions.
+            Consult a healthcare professional before making health decisions.</span>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/simulator.js') }}"></script>
+<script>
+  if (window.SESSION_PREFILL && Object.keys(window.SESSION_PREFILL).length) {
+    setBaseInputs(window.SESSION_PREFILL);
+  }
+  document.addEventListener('DOMContentLoaded', () => runSim());
+</script>
+{% endblock %}

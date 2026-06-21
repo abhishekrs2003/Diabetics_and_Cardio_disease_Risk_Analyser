@@ -1,0 +1,7 @@
+{
+  "model_name": "Neural Network (MLP, Tuned)",
+  "mae": 2.883,
+  "rmse": 3.7971,
+  "r2": 0.9896,
+  "mape": 8.419305320209888e+16
+}

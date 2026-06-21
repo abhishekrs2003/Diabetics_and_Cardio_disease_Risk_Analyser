@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — CardioRisk AI{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="sec-tag">Population Analytics</div>
+  <h1>Model &amp; SHAP <em>Dashboard</em></h1>
+  <p>Global feature importances from SHAP, model performance metrics, and
+     population-level risk patterns from both datasets.</p>
+</div>
+
+<div class="stat-row" style="margin-bottom:20px">
+  <div class="stat-box">
+    <div class="stat-val" style="color:#ef4444">Logistic Regression</div>
+    <div class="stat-lbl">CVD model (baseline)</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val" style="color:#22c55e">Neural Network</div>
+    <div class="stat-lbl">Diabetes model (tuned)</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-val">SHAP</div>
+    <div class="stat-lbl">Explainability for both</div>
+  </div>
+</div>
+
+<div class="dash-grid">
+
+  <!-- ── CVD SHAP importance (real data) ── -->
+  <div class="card">
+    <div class="chart-title">Top predictors — CVD model (SHAP)</div>
+    <div class="chart-sub">Mean absolute SHAP value across the test set — Logistic Regression</div>
+    <div>
+      {% set cvd_items = cvd_shap.items() | list %}
+      {% set cvd_max = cvd_items[0][1] if cvd_items else 1 %}
+      {% for feat, imp in cvd_items[:10] %}
+      <div class="imp-row">
+        <span class="imp-name" title="{{ feat }}">{{ feat | replace('_', ' ') }}</span>
+        <div class="imp-track">
+          <div class="imp-fill" style="width:{{ (imp / cvd_max * 100) | int }}%;background:linear-gradient(90deg,#ef4444,#f87171)"></div>
+        </div>
+        <span class="imp-val">{{ "%.3f"|format(imp) }}</span>
+      </div>
+      {% else %}
+      <p style="font-size:.78rem;color:var(--text2)">Run the notebook patch cell to generate shap_importance.json</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Diabetes SHAP importance (real data) ── -->
+  <div class="card">
+    <div class="chart-title">Top predictors — Diabetes model (SHAP)</div>
+    <div class="chart-sub">Mean absolute SHAP value across the test set — Neural Network (MLP)</div>
+    <div>
+      {% set diab_items = diab_shap.items() | list %}
+      {% set diab_max = diab_items[0][1] if diab_items else 1 %}
+      {% for feat, imp in diab_items[:10] %}
+      <div class="imp-row">
+        <span class="imp-name" title="{{ feat }}">{{ feat | replace('_', ' ') }}</span>
+        <div class="imp-track">
+          <div class="imp-fill" style="width:{{ (imp / diab_max * 100) | int }}%;background:linear-gradient(90deg,#22c55e,#4ade80)"></div>
+        </div>
+        <span class="imp-val" style="color:var(--green)">{{ "%.3f"|format(imp) }}</span>
+      </div>
+      {% else %}
+      <p style="font-size:.78rem;color:var(--text2)">Run the notebook patch cell to generate shap_importance.json</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- ── Model performance (real metrics) ── -->
+  <div class="card">
+    <div class="chart-title">Model performance (test set)</div>
+    <div class="chart-sub">Loaded from cvd_metrics.json / diab_metrics.json</div>
+
+    <div style="margin-bottom:14px">
+      <div style="font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:8px">CVD — Logistic Regression (Baseline)</div>
+      <div class="metric-grid">
+        <div class="metric-box"><div class="metric-val" style="color:#ef4444">{{ "%.3f"|format(cvd_metrics.roc_auc or 0) }}</div><div class="metric-lbl">ROC-AUC</div></div>
+        <div class="metric-box"><div class="metric-val" style="color:#f59e0b">{{ "%.3f"|format(cvd_metrics.f1 or 0) }}</div><div class="metric-lbl">F1 Score</div></div>
+        <div class="metric-box"><div class="metric-val" style="color:#22c55e">{{ "%.3f"|format(cvd_metrics.recall or 0) }}</div><div class="metric-lbl">Recall</div></div>
+        <div class="metric-box"><div class="metric-val" style="color:#60a5fa">{{ "%.3f"|format(cvd_metrics.precision or 0) }}</div><div class="metric-lbl">Precision</div></div>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:8px">Diabetes — Neural Network (MLP, Tuned)</div>
+      <div class="metric-grid">
+        <div class="metric-box"><div class="metric-val" style="color:#22c55e">{{ "%.3f"|format(diab_metrics.r2 or 0) }}</div><div class="metric-lbl">R²</div></div>
+        <div class="metric-box"><div class="metric-val" style="color:#f59e0b">{{ "%.2f"|format(diab_metrics.mae or 0) }}</div><div class="metric-lbl">MAE</div></div>
+        <div class="metric-box"><div class="metric-val" style="color:#60a5fa">{{ "%.2f"|format(diab_metrics.rmse or 0) }}</div><div class="metric-lbl">RMSE</div></div>
+        <div class="metric-box"><div class="metric-val" style="color:#a78bfa">{{ "%.1f"|format(diab_metrics.mape or 0) }}%</div><div class="metric-lbl">MAPE</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Preprocessing notes ── -->
+  <div class="card">
+    <div class="chart-title">Preprocessing summary</div>
+    <div class="chart-sub">Key decisions applied in both notebooks</div>
+    <div style="font-size:.74rem;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--text)">CVD dataset</strong><br>
+      ✓ log1p transform on right-skewed consumption columns<br>
+      ✓ Ordinal encoding: General_Health, Age_Category, Checkup<br>
+      ✓ One-hot encoding: Diabetes (4 categories)<br>
+      ✓ Comorbidity_Score engineered feature<br>
+      ✓ MinMaxScaler on continuous features<br>
+      ✓ SMOTE for class imbalance, threshold tuning skipped for baseline LR<br><br>
+      <strong style="color:var(--text)">Diabetes dataset</strong><br>
+      ✓ LabelEncoder: gender, family_history_diabetes<br>
+      ✓ Manual ordinal map: physical_activity_level<br>
+      ✓ StandardScaler on all numeric features<br>
+      ✓ RandomizedSearchCV tuning (15 iterations, 3-fold CV)
+    </div>
+  </div>
+
+</div>
+
+<div style="padding:0 24px 48px;max-width:1140px;margin:0 auto">
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+    <a href="/diabetes" class="btn btn-primary">Start Diabetes Assessment</a>
+    <a href="/cvd"      class="btn btn-outline">CVD Assessment</a>
+    <a href="/simulator"class="btn btn-outline">Intervention Simulator</a>
+  </div>
+</div>
+{% endblock %}

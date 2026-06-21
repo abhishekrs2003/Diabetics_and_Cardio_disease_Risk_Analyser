@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+{% block title %}CVD Risk Prediction — CardioRisk AI{% endblock %}
+
+{% block extra_head %}
+<script>
+  window.CVD_SHAP_GLOBAL = {{ cvd_shap | tojson | default('{}') }};
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-hero">
+  <div class="sec-tag">Step 2 of 2</div>
+  <h1>Cardiovascular Risk <em>Assessment</em></h1>
+  <p>Fill in your details below. If you completed the diabetes assessment first,
+     your height, weight, and diabetes result have been carried over automatically.
+     The Logistic Regression model will show you exactly which answers drove your result.</p>
+</div>
+
+<div class="predict-layout">
+
+  <div class="form-card">
+
+    {% if prefill %}
+    <div class="carryover-banner">
+      <span>✓</span>
+      <div>
+        <strong>Carried over from your diabetes assessment</strong><br>
+        Height {{ prefill.height_cm | int }} cm ·
+        Weight {{ prefill.weight_kg }} kg ·
+        BMI {{ prefill.bmi }} ({{ prefill.bmi_category }}) ·
+        Diabetes:
+        <strong>
+          {% if prefill.gestational %}Gestational only
+          {% elif prefill.score >= 65 %}Yes (score {{ prefill.score }})
+          {% elif prefill.score >= 35 %}Pre-diabetes / borderline (score {{ prefill.score }})
+          {% else %}No (score {{ prefill.score }})
+          {% endif %}
+        </strong>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="wizard-tabs" id="cvd_tabs">
+      <div class="wtab active"><span class="wtab-num">1</span> Physical</div>
+      <div class="wtab"><span class="wtab-num">2</span> Lifestyle</div>
+      <div class="wtab"><span class="wtab-num">3</span> History</div>
+    </div>
+
+    <form id="cvd_form">
+
+      {% if prefill %}
+      <input type="hidden" name="height_cm"     value="{{ prefill.height_cm }}">
+      <input type="hidden" name="weight_kg"      value="{{ prefill.weight_kg }}">
+      <input type="hidden" name="diabetes_value" id="diabetes_value_hidden" value="{{ prefill.diabetes_value }}">
+      <input type="hidden" id="from_session"     value="1">
+      {% else %}
+      <input type="hidden" id="from_session"     value="0">
+      {% endif %}
+
+      <!-- ── Section 1: Physical ── -->
+      <div class="form-section active" id="cvd_sec_0">
+        <div class="field-grid">
+
+          {% if not prefill %}
+          <div class="field-group">
+            <label class="field-label">Height</label>
+            <div class="unit-input-wrap">
+              <input type="number" id="c_height" name="height_cm" class="field-input"
+                     min="50" max="250" placeholder="e.g. 170" oninput="onBodyChange('c')">
+              <span class="unit-label">cm</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Weight</label>
+            <div class="unit-input-wrap">
+              <input type="number" id="c_weight" name="weight_kg" class="field-input"
+                     min="20" max="300" placeholder="e.g. 75" oninput="onBodyChange('c')">
+              <span class="unit-label">kg</span>
+            </div>
+          </div>
+          <div class="field-group full">
+            <div class="bmi-card">
+              <div class="bmi-card-left">
+                <div class="bmi-icon">⚖️</div>
+                <div>
+                  <div class="bmi-card-label">Calculated BMI</div>
+                  <div class="bmi-card-value" id="c_bmi_val">—</div>
+                </div>
+              </div>
+              <div class="bmi-card-cat" id="c_bmi_cat">Enter height &amp; weight</div>
+              <div class="bmi-scale-wrap">
+                <div class="bmi-scale-bar"><div class="bmi-scale-marker" id="c_bmi_marker"></div></div>
+                <div class="bmi-scale-ticks"><span>15</span><span>18.5</span><span>25</span><span>30</span><span>40</span></div>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <div class="field-group full">
+            <div class="bmi-card" style="border-color:rgba(34,197,94,.3)">
+              <div class="bmi-card-left">
+                <div class="bmi-icon">⚖️</div>
+                <div>
+                  <div class="bmi-card-label">BMI (carried over)</div>
+                  <div class="bmi-card-value" style="color:{{ prefill.get('bmi_color','#22c55e') }}">{{ prefill.bmi }}</div>
+                </div>
+              </div>
+              <div class="bmi-card-cat" style="color:{{ prefill.get('bmi_color','#22c55e') }}">{{ prefill.bmi_category }}</div>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="field-group">
+            <label class="field-label">Sex</label>
+            <div class="select-wrap">
+              <select name="Sex" class="field-select">
+                <option value="">Select...</option>
+                <option value="Female">Female</option>
+                <option value="Male">Male</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Age Group</label>
+            <div class="select-wrap">
+              <select name="Age_Category" class="field-select">
+                <option value="">Select...</option>
+                <option>18-24</option><option>25-29</option><option>30-34</option>
+                <option>35-39</option><option>40-44</option><option>45-49</option>
+                <option>50-54</option><option>55-59</option><option>60-64</option>
+                <option>65-69</option><option>70-74</option><option>75-79</option><option>80+</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">General Health (self-rated)</label>
+            <div class="select-wrap">
+              <select name="General_Health" class="field-select">
+                <option value="">Select...</option>
+                <option>Excellent</option><option>Very Good</option>
+                <option selected>Good</option><option>Fair</option><option>Poor</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Last Routine Checkup</label>
+            <div class="select-wrap">
+              <select name="Checkup" class="field-select">
+                <option value="">Select...</option>
+                <option value="Within the past year (anytime less than 12 months ago)">Within past year</option>
+                <option value="Within the past 2 years (1 year but less than 2 years ago)">1–2 years ago</option>
+                <option value="Within the past 5 years (2 years but less than 5 years ago)">2–5 years ago</option>
+                <option value="Never">Never</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── Section 2: Lifestyle ── -->
+      <div class="form-section" id="cvd_sec_1">
+        <div class="field-grid">
+
+          <div class="field-group full">
+            <label class="field-label">Exercise in past 30 days?</label>
+            <div class="pill-group">
+              <label class="pill"><input type="radio" name="Exercise" value="Yes"><label>✓ Yes</label></label>
+              <label class="pill"><input type="radio" name="Exercise" value="No"><label>✗ No</label></label>
+            </div>
+          </div>
+
+          <div class="field-group full">
+            <label class="field-label">Smoking history?</label>
+            <div class="pill-group">
+              <label class="pill"><input type="radio" name="Smoking_History" value="Yes"><label>Yes</label></label>
+              <label class="pill"><input type="radio" name="Smoking_History" value="No" checked><label>No</label></label>
+            </div>
+          </div>
+
+          <div class="field-group full">
+            <label class="field-label">Alcohol consumption (drinks/week) — <span class="range-val-inline" id="alc_val">4</span></label>
+            <input type="range" name="Alcohol_Consumption" min="0" max="30" step="1" value="4"
+                   oninput="syncRangeInline(this,'alc_val')">
+          </div>
+
+          <div class="field-group full">
+            <label class="field-label">Fruit consumption (servings/week) — <span class="range-val-inline" id="fruit_val">15</span></label>
+            <input type="range" name="Fruit_Consumption" min="0" max="60" step="1" value="15"
+                   oninput="syncRangeInline(this,'fruit_val')">
+          </div>
+
+          <div class="field-group full">
+            <label class="field-label">Green vegetables (servings/week) — <span class="range-val-inline" id="veg_val">12</span></label>
+            <input type="range" name="Green_Vegetables_Consumption" min="0" max="60" step="1" value="12"
+                   oninput="syncRangeInline(this,'veg_val')">
+          </div>
+
+          <div class="field-group full">
+            <label class="field-label">Fried potato consumption (servings/week) — <span class="range-val-inline" id="fry_val">8</span></label>
+            <input type="range" name="FriedPotato_Consumption" min="0" max="40" step="1" value="8"
+                   oninput="syncRangeInline(this,'fry_val')">
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── Section 3: Medical History ── -->
+      <div class="form-section" id="cvd_sec_2">
+        <div class="field-grid">
+
+          <div class="field-group full">
+            <label class="field-label">Diabetes status</label>
+            {% if prefill %}
+              <div class="prefill-field">
+                <span>✓</span>
+                <div>
+                  Auto-set:
+                  <strong>
+                    {% if prefill.gestational %}Gestational diabetes only
+                    {% elif prefill.diabetes_value == 'Yes' %}Yes — confirmed risk (score {{ prefill.score }})
+                    {% elif 'pre-diabetes' in prefill.diabetes_value or 'borderline' in prefill.diabetes_value %}Pre-diabetes / borderline (score {{ prefill.score }})
+                    {% else %}No (score {{ prefill.score }})
+                    {% endif %}
+                  </strong>
+                  <span class="prefill-override"
+                        onclick="document.getElementById('diabetes_override').style.display='block'; this.style.display='none'">
+                    Override manually ↓
+                  </span>
+                </div>
+              </div>
+              <div id="diabetes_override" style="display:none;margin-top:8px">
+                <div class="select-wrap">
+                  <select class="field-select"
+                          onchange="document.getElementById('diabetes_value_hidden').value=this.value">
+                    <option value="No">No</option>
+                    <option value="No, pre-diabetes or borderline diabetes">Pre-diabetes / borderline</option>
+                    <option value="Yes, but female told only during pregnancy">Gestational only</option>
+                    <option value="Yes">Yes (confirmed)</option>
+                  </select>
+                </div>
+              </div>
+            {% else %}
+              <div class="select-wrap">
+                <select name="diabetes_value" class="field-select">
+                  <option value="No" selected>No</option>
+                  <option value="No, pre-diabetes or borderline diabetes">Pre-diabetes / borderline</option>
+                  <option value="Yes, but female told only during pregnancy">Gestational only</option>
+                  <option value="Yes">Yes (confirmed)</option>
+                </select>
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Skin cancer history?</label>
+            <div class="pill-group">
+              <label class="pill"><input type="radio" name="Skin_Cancer" value="Yes"><label>Yes</label></label>
+              <label class="pill"><input type="radio" name="Skin_Cancer" value="No" checked><label>No</label></label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Other cancer history?</label>
+            <div class="pill-group">
+              <label class="pill"><input type="radio" name="Other_Cancer" value="Yes"><label>Yes</label></label>
+              <label class="pill"><input type="radio" name="Other_Cancer" value="No" checked><label>No</label></label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Depression history?</label>
+            <div class="pill-group">
+              <label class="pill"><input type="radio" name="Depression" value="Yes"><label>Yes</label></label>
+              <label class="pill"><input type="radio" name="Depression" value="No" checked><label>No</label></label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Arthritis?</label>
+            <div class="pill-group">
+              <label class="pill"><input type="radio" name="Arthritis" value="Yes"><label>Yes</label></label>
+              <label class="pill"><input type="radio" name="Arthritis" value="No" checked><label>No</label></label>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="wizard-nav">
+        <button type="button" class="btn btn-outline" id="cvd_back"
+                style="visibility:hidden" onclick="wizardNav(-1)">← Back</button>
+        <div class="wizard-dots" id="cvd_dots"></div>
+        <button type="button" class="btn btn-primary" id="cvd_next"
+                onclick="wizardNav(1)">Next →</button>
+      </div>
+
+    </form>
+
+    <div id="cvd_error" class="form-error" style="display:none"></div>
+
+    <button class="btn-predict" id="btn_predict_cvd" onclick="submitCVD()">
+      <span class="btn-spinner"></span>
+      <span class="btn-label">🫀 Predict CVD Risk</span>
+    </button>
+
+  </div><!-- /form-card -->
+
+  <!-- ══════════════ RIGHT — Result panel ══════════════ -->
+  <div class="result-panel">
+    <div style="padding:10px 18px;border-bottom:1px solid var(--line);
+                display:flex;align-items:center;justify-content:space-between">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:.68rem;
+                   letter-spacing:.1em;color:var(--text2);text-transform:uppercase">CVD Assessment</span>
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--green);
+                   display:inline-block;animation:pulse-dot 2s ease-in-out infinite"></span>
+    </div>
+
+    <div class="result-placeholder" id="cvd_placeholder">
+      <div class="placeholder-icon">🫀</div>
+      <h3>Awaiting your inputs</h3>
+      <p>Complete all three sections and click <strong>Predict CVD Risk</strong>
+         to receive your cardiovascular risk probability and a live SHAP breakdown.</p>
+      {% if prefill %}<p class="placeholder-note">Your diabetes result has been carried over — no need to re-enter it.</p>{% endif %}
+    </div>
+
+    <div id="cvd_result" style="display:none">
+
+      <div class="gauge-section">
+        <div class="gauge-label-top">CVD Probability</div>
+        <div class="gauge-wrap">
+          <svg viewBox="0 0 200 110" width="180" style="overflow:visible">
+            <path d="M20 100 A80 80 0 0 1 180 100" fill="none"
+                  stroke="rgba(255,255,255,.08)" stroke-width="14" stroke-linecap="round"/>
+            <path id="cvd_gauge_arc" d="M20 100 A80 80 0 0 1 180 100" fill="none"
+                  stroke="#22c55e" stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="251.2" stroke-dashoffset="251.2"
+                  style="transition:stroke-dashoffset 1.2s cubic-bezier(.34,1.2,.64,1),stroke .5s"/>
+            <text id="cvd_gauge_text" x="100" y="92" text-anchor="middle"
+                  style="font-family:'Instrument Serif',serif;font-size:2rem;fill:var(--text)">—</text>
+            <text x="100" y="108" text-anchor="middle" style="font-size:.65rem;fill:var(--text2)">PROBABILITY %</text>
+          </svg>
+        </div>
+        <div class="risk-pill" id="cvd_risk_badge">—</div>
+      </div>
+
+      <div class="bmi-result-pill">
+        <span>BMI</span><span class="bmi-result-val" id="cvd_bmi_val">—</span>
+        <span id="cvd_bmi_cat">—</span>
+      </div>
+
+      <div style="padding:6px 18px;font-size:.74rem;color:var(--text2);border-bottom:1px solid var(--line)">
+        Diabetes input used: <strong id="cvd_diabetes_used" style="color:var(--text)">—</strong>
+      </div>
+
+      <!-- ── SHAP explainability ── -->
+      <div class="shap-section">
+        <div class="shap-section-title">🔍 Why this risk level? (SHAP explanation)</div>
+        <div class="shap-section-sub">
+          Each bar shows how much that specific answer pushed your CVD probability
+          up (red, right) or down (green, left).
+        </div>
+        <div class="shap-legend">
+          <div class="shap-legend-item"><span class="shap-legend-swatch" style="background:#ef4444"></span> Increases risk</div>
+          <div class="shap-legend-item"><span class="shap-legend-swatch" style="background:#22c55e"></span> Decreases risk</div>
+        </div>
+        <div id="cvd_shap_waterfall"></div>
+        <div class="shap-explainer-text" id="cvd_shap_summary"></div>
+      </div>
+
+      <a href="/simulator" class="next-step-btn" id="cvd_next_btn" style="display:none">
+        Try Intervention Simulator →
+        <small>See how lifestyle changes shift your risk</small>
+      </a>
+
+      <div class="disclaimer">
+        <span>⚠</span>
+        <span>Educational estimate only. Consult a healthcare professional.</span>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/predict.js') }}"></script>
+<script>
+  initWizard('#cvd_tabs',
+    ['cvd_sec_0','cvd_sec_1','cvd_sec_2'],
+    'cvd_dots', 'cvd_back', 'cvd_next', 'btn_predict_cvd'
+  );
+</script>
+{% endblock %}
