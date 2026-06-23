@@ -30,16 +30,28 @@
       <div class="field-group" style="margin-bottom:14px">
         <div class="sim-field-label"><span>Smoking</span><span class="sim-impact" id="imp_Smoking_History">—</span></div>
         <div class="pill-group">
-          <label class="pill"><input type="radio" name="Smoking_History" value="No" checked onchange="runSim()"><label>Non-smoker</label></label>
-          <label class="pill"><input type="radio" name="Smoking_History" value="Yes" onchange="runSim()"><label>Smoker</label></label>
+          <div class="pill">
+            <input type="radio" name="Smoking_History" value="No" id="sim_smoke_no" checked onchange="runSim()">
+            <label for="sim_smoke_no">Non-smoker</label>
+          </div>
+          <div class="pill">
+            <input type="radio" name="Smoking_History" value="Yes" id="sim_smoke_yes" onchange="runSim()">
+            <label for="sim_smoke_yes">Smoker</label>
+          </div>
         </div>
       </div>
 
       <div class="field-group" style="margin-bottom:14px">
         <div class="sim-field-label"><span>Exercise (past 30 days)</span><span class="sim-impact" id="imp_Exercise">—</span></div>
         <div class="pill-group">
-          <label class="pill"><input type="radio" name="Exercise" value="Yes" checked onchange="runSim()"><label>Active</label></label>
-          <label class="pill"><input type="radio" name="Exercise" value="No" onchange="runSim()"><label>Inactive</label></label>
+          <div class="pill">
+            <input type="radio" name="Exercise" value="Yes" id="sim_ex_yes" checked onchange="runSim()">
+            <label for="sim_ex_yes">Active</label>
+          </div>
+          <div class="pill">
+            <input type="radio" name="Exercise" value="No" id="sim_ex_no" onchange="runSim()">
+            <label for="sim_ex_no">Inactive</label>
+          </div>
         </div>
       </div>
 
@@ -80,9 +92,18 @@
       <div class="field-group" style="margin-bottom:14px">
         <div class="sim-field-label"><span>Physical activity</span><span class="sim-impact" id="imp_physical_activity_level">—</span></div>
         <div class="pill-group">
-          <label class="pill"><input type="radio" name="physical_activity_level" value="Low" checked onchange="runSim()"><label>Low</label></label>
-          <label class="pill"><input type="radio" name="physical_activity_level" value="Moderate" onchange="runSim()"><label>Moderate</label></label>
-          <label class="pill"><input type="radio" name="physical_activity_level" value="High" onchange="runSim()"><label>High</label></label>
+          <div class="pill">
+            <input type="radio" name="physical_activity_level" value="Low" id="sim_act_low" checked onchange="runSim()">
+            <label for="sim_act_low">Low</label>
+          </div>
+          <div class="pill">
+            <input type="radio" name="physical_activity_level" value="Moderate" id="sim_act_mod" onchange="runSim()">
+            <label for="sim_act_mod">Moderate</label>
+          </div>
+          <div class="pill">
+            <input type="radio" name="physical_activity_level" value="High" id="sim_act_high" onchange="runSim()">
+            <label for="sim_act_high">High</label>
+          </div>
         </div>
       </div>
 
@@ -99,9 +120,18 @@
       <div class="field-group" style="margin-bottom:14px">
         <div class="sim-field-label"><span>Stress level</span><span class="sim-impact" id="imp_stress_level">—</span></div>
         <div class="pill-group">
-          <label class="pill"><input type="radio" name="stress_level" value="1" onchange="runSim()"><label>Low</label></label>
-          <label class="pill"><input type="radio" name="stress_level" value="2" checked onchange="runSim()"><label>Medium</label></label>
-          <label class="pill"><input type="radio" name="stress_level" value="3" onchange="runSim()"><label>High</label></label>
+          <div class="pill">
+            <input type="radio" name="stress_level" value="1" id="sim_stress_low" onchange="runSim()">
+            <label for="sim_stress_low">Low</label>
+          </div>
+          <div class="pill">
+            <input type="radio" name="stress_level" value="2" id="sim_stress_med" checked onchange="runSim()">
+            <label for="sim_stress_med">Medium</label>
+          </div>
+          <div class="pill">
+            <input type="radio" name="stress_level" value="3" id="sim_stress_high" onchange="runSim()">
+            <label for="sim_stress_high">High</label>
+          </div>
         </div>
       </div>
 

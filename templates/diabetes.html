@@ -179,11 +179,17 @@
             </div>
           </div>
 
-          <div class="field-group">
+          <div class="field-group full">
             <label class="field-label">Family History of Diabetes?</label>
             <div class="pill-group">
-              <label class="pill"><input type="radio" name="family_history_diabetes" value="Yes"><label>Yes</label></label>
-              <label class="pill"><input type="radio" name="family_history_diabetes" value="No" checked><label>No</label></label>
+              <div class="pill">
+                <input type="radio" name="family_history_diabetes" value="Yes" id="fh_yes">
+                <label for="fh_yes">Yes</label>
+              </div>
+              <div class="pill">
+                <input type="radio" name="family_history_diabetes" value="No" id="fh_no" checked>
+                <label for="fh_no">No</label>
+              </div>
             </div>
           </div>
 
@@ -208,9 +214,9 @@
           <div class="field-group">
             <label class="field-label">Stress Level</label>
             <div class="pill-group">
-              <label class="pill"><input type="radio" name="stress_level" value="1"><label>Low</label></label>
-              <label class="pill"><input type="radio" name="stress_level" value="2" checked><label>Medium</label></label>
-              <label class="pill"><input type="radio" name="stress_level" value="3"><label>High</label></label>
+              <div class="pill"><input type="radio" name="stress_level" value="1" id="st_low"><label for="st_low">Low</label></div>
+              <div class="pill"><input type="radio" name="stress_level" value="2" id="st_med" checked><label for="st_med">Medium</label></div>
+              <div class="pill"><input type="radio" name="stress_level" value="3" id="st_high"><label for="st_high">High</label></div>
             </div>
           </div>
 
